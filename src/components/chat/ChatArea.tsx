@@ -33,6 +33,9 @@ export default function ChatArea() {
   const { conversations, activeConversationId } = useSelector((state: RootState) => state.chat)
   const { credits } = useSelector((state: RootState) => state.auth)
   const activeConversation = conversations.find(conv => conv.id === activeConversationId)
+  
+  // Check if this is a new chat session
+  const isNewChat = activeConversationId === 'new-chat'
 
   const formatTime = (timestamp: Date) => {
     return timestamp.toLocaleTimeString('en-US', {
@@ -59,12 +62,11 @@ export default function ChatArea() {
   const handleSuggestionClick = async (suggestion: string) => {
     // Check if user has credits
     if (credits <= 0) {
-      // Could show a toast or modal about insufficient credits
       console.log('Insufficient credits')
       return
     }
 
-    // Create new conversation
+    // Create new conversation when user clicks a suggestion
     const conversationId = Date.now().toString()
     dispatch(createConversation({ 
       id: conversationId, 
@@ -101,7 +103,8 @@ export default function ChatArea() {
     }, 1000)
   }
 
-  if (!activeConversation) {
+  // Show welcome screen for new chat or when no conversation is selected
+  if (!activeConversation && !isNewChat) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-2xl">
@@ -131,8 +134,45 @@ export default function ChatArea() {
     )
   }
 
+  // Show welcome message for new chat
+  if (isNewChat) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center max-w-2xl">
+          <div className="mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <Bot className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">Hello! I'm your AI Assistant</h2>
+            <p className="text-muted-foreground mb-6">
+              I'm here to help you with questions, tasks, creative projects, and more. What would you like to explore today?
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+            {suggestions.map((suggestion, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="p-4 h-auto text-left justify-start rounded-xl border border-border bg-background text-foreground shadow-sm hover:shadow-md hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+              >
+                <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="text-sm">{suggestion}</span>
+              </Button>
+            ))}
+          </div>
+          
+          <p className="text-xs text-muted-foreground">
+            💡 Pro tip: You can type your own message in the chat box below to start a custom conversation
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       <ScrollArea className="flex-1">
         <div className="max-w-4xl mx-auto">
           {activeConversation.messages.map((message: Message) => (

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Send, Paperclip, Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { addMessage } from '../../store/slices/chatSlice'
+import { addMessage, createConversation, setActiveConversation } from '../../store/slices/chatSlice'
 import { consumeCredit } from '../../store/slices/authSlice'
 import { RootState, AppDispatch } from '../../store'
 
@@ -15,14 +15,28 @@ export default function ChatInput() {
   const { credits } = useSelector((state: RootState) => state.auth)
 
   const handleSend = async () => {
-    if (!message.trim() || !activeConversationId) return
+    if (!message.trim()) return
 
     // Check if user has credits
     if (credits <= 0) {
-      // Could show a toast or modal about insufficient credits
       console.log('Insufficient credits')
       return
     }
+
+    let conversationId = activeConversationId
+
+    // Create new conversation if this is a "new-chat" session
+    if (activeConversationId === 'new-chat') {
+      conversationId = Date.now().toString()
+      dispatch(createConversation({ 
+        id: conversationId, 
+        title: message.trim().slice(0, 50) + (message.trim().length > 50 ? "..." : "")
+      }))
+      dispatch(setActiveConversation(conversationId))
+    }
+
+    // If no conversation is selected and not new-chat, exit
+    if (!conversationId || conversationId === 'new-chat') return
 
     // Add user message
     const userMessage = {
@@ -32,7 +46,7 @@ export default function ChatInput() {
       timestamp: new Date()
     }
 
-    dispatch(addMessage({ conversationId: activeConversationId, message: userMessage }))
+    dispatch(addMessage({ conversationId, message: userMessage }))
 
     // Clear the input
     setMessage('')
@@ -53,7 +67,7 @@ export default function ChatInput() {
         role: 'assistant' as const,
         timestamp: new Date()
       }
-      dispatch(addMessage({ conversationId: activeConversationId, message: aiMessage }))
+      dispatch(addMessage({ conversationId: conversationId!, message: aiMessage }))
     }, 1000)
   }
 
@@ -116,7 +130,7 @@ export default function ChatInput() {
             
             <Button
               onClick={handleSend}
-              disabled={!message.trim() || !activeConversationId || credits <= 0}
+              disabled={!message.trim() || credits <= 0}
               className="h-8 w-8 p-0 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
@@ -127,11 +141,13 @@ export default function ChatInput() {
         {/* Character count or status */}
         <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
           <span>
-            {!activeConversationId 
-              ? "Select a conversation to start chatting"
-              : credits <= 0 
-                ? "No credits remaining" 
-                : `${credits} credits remaining`
+            {credits <= 0 
+              ? "No credits remaining" 
+              : activeConversationId === 'new-chat'
+                ? "Type your message to start the conversation"
+                : !activeConversationId
+                  ? "Select a conversation to start chatting"
+                  : `${credits} credits remaining`
             }
           </span>
           <span>{message.length}/2000</span>

@@ -13,8 +13,8 @@ export default function ChatSidebar() {
   const { conversations, activeConversationId } = useSelector((state: RootState) => state.chat)
 
   const handleNewChat = () => {
-    const id = Date.now().toString()
-    dispatch(createConversation({ id, title: 'New Chat' }))
+    // Set a temporary conversation ID to show welcome screen
+    dispatch(setActiveConversation('new-chat'))
   }
 
   const handleSelectConversation = (conversationId: string) => {
