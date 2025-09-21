@@ -4,6 +4,7 @@ import { Send, Paperclip, Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { addMessage } from '../../store/slices/chatSlice'
+import { consumeCredit } from '../../store/slices/authSlice'
 import { RootState, AppDispatch } from '../../store'
 
 export default function ChatInput() {
@@ -11,9 +12,17 @@ export default function ChatInput() {
   const [isRecording, setIsRecording] = useState(false)
   const dispatch = useDispatch<AppDispatch>()
   const { activeConversationId } = useSelector((state: RootState) => state.chat)
+  const { credits } = useSelector((state: RootState) => state.auth)
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim() || !activeConversationId) return
+
+    // Check if user has credits
+    if (credits <= 0) {
+      // Could show a toast or modal about insufficient credits
+      console.log('Insufficient credits')
+      return
+    }
 
     // Add user message
     const userMessage = {
@@ -25,6 +34,17 @@ export default function ChatInput() {
 
     dispatch(addMessage({ conversationId: activeConversationId, message: userMessage }))
 
+    // Clear the input
+    setMessage('')
+
+    // Consume credit
+    try {
+      await dispatch(consumeCredit()).unwrap()
+    } catch (error) {
+      console.error('Failed to consume credit:', error)
+      return
+    }
+
     // Simulate AI response after a delay
     setTimeout(() => {
       const aiMessage = {
@@ -35,8 +55,6 @@ export default function ChatInput() {
       }
       dispatch(addMessage({ conversationId: activeConversationId, message: aiMessage }))
     }, 1000)
-
-    setMessage('')
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -98,7 +116,7 @@ export default function ChatInput() {
             
             <Button
               onClick={handleSend}
-              disabled={!message.trim() || !activeConversationId}
+              disabled={!message.trim() || !activeConversationId || credits <= 0}
               className="h-8 w-8 p-0 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
@@ -109,7 +127,12 @@ export default function ChatInput() {
         {/* Character count or status */}
         <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
           <span>
-            {!activeConversationId && "Select a conversation to start chatting"}
+            {!activeConversationId 
+              ? "Select a conversation to start chatting"
+              : credits <= 0 
+                ? "No credits remaining" 
+                : `${credits} credits remaining`
+            }
           </span>
           <span>{message.length}/2000</span>
         </div>

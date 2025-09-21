@@ -72,6 +72,11 @@ export const authAPI = {
     const response = await api.patch('/auth/credits', { credits });
     return response.data;
   },
+
+  consumeCredit: async () => {
+    const response = await api.post('/auth/consume-credit');
+    return response.data;
+  },
 };
 
 export default api;

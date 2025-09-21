@@ -158,4 +158,31 @@ router.patch('/credits', auth, async (req, res) => {
   }
 });
 
+// Consume credits (for sending messages)
+router.post('/consume-credit', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.credits <= 0) {
+      return res.status(400).json({ error: 'Insufficient credits' });
+    }
+
+    // Deduct one credit
+    user.credits = Math.max(0, user.credits - 1);
+    await user.save();
+
+    res.json({
+      message: 'Credit consumed successfully',
+      credits: user.credits
+    });
+  } catch (error) {
+    console.error('Consume credit error:', error);
+    res.status(500).json({ error: 'Server error consuming credit' });
+  }
+});
+
 export default router;

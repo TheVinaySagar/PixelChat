@@ -88,9 +88,23 @@ export const getCurrentUser = createAsyncThunk('auth/getCurrentUser', async (_, 
     // Clear invalid token
     localStorage.removeItem('authToken')
     localStorage.removeItem('user')
-    return null
+    const message = error.response?.data?.error || error.message || 'Failed to get user'
+    return rejectWithValue(message)
   }
 })
+
+export const consumeCredit = createAsyncThunk(
+  'auth/consumeCredit',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authAPI.consumeCredit()
+      return response.credits
+    } catch (error: any) {
+      const message = error.response?.data?.error || error.message || 'Failed to consume credit'
+      return rejectWithValue(message)
+    }
+  }
+)
 
 const authSlice = createSlice({
   name: 'auth',
@@ -145,6 +159,16 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload
         state.credits = action.payload?.credits || 100
+      })
+      // Consume Credit
+      .addCase(consumeCredit.fulfilled, (state, action) => {
+        state.credits = action.payload
+        if (state.user) {
+          state.user.credits = action.payload
+        }
+      })
+      .addCase(consumeCredit.rejected, (state, action) => {
+        state.error = action.payload as string || 'Failed to consume credit'
       })
   },
 })
