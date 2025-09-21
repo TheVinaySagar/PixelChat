@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom'
 import ChatSidebar from '../chat/ChatSidebar'
 import ChatHeader from '../chat/ChatHeader'
 import ChatArea from '../chat/ChatArea'
+import ChatInput from '../chat/ChatInput'
 import NotificationPanel from '../notifications/NotificationPanel'
 import { RootState } from '../../store'
 import { useAuth } from '../../hooks/useAuth'
@@ -25,7 +26,10 @@ export default function ChatLayout() {
       <ChatHeader />
       <div className="flex-1 flex overflow-hidden">
         <ChatSidebar />
-        <ChatArea />
+        <div className="flex-1 flex flex-col">
+          <ChatArea />
+          <ChatInput />
+        </div>
       </div>
       <NotificationPanel />
     </div>

@@ -1,7 +1,14 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { Bell, LogOut, User } from 'lucide-react'
+import { Bell, ChevronDown, User, Coins } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { togglePanel } from '../../store/slices/notificationSlice'
 import { signOut } from '../../store/slices/authSlice'
 import { RootState, AppDispatch } from '../../store'
@@ -20,57 +27,71 @@ export default function ChatHeader() {
   }
 
   return (
-    <header className="h-16 border-b border-border bg-background flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
-        {/* User info can be added here if needed */}
+    <header className="h-16 border-b border-border bg-white/80 backdrop-blur-xl flex items-center justify-between px-6 shadow-sm">
+      {/* Left side - App title */}
+      <div className="flex items-center">
+        <h1 className="text-xl font-semibold text-foreground">AI Chat</h1>
       </div>
 
+      {/* Right side - Credits, Notifications, User menu */}
       <div className="flex items-center gap-4">
-        {/* Credits Counter */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Credits:</span>
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            {credits}
-          </Badge>
+        {/* Credits Counter with coins icon */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl shadow-sm">
+          <Coins className="h-4 w-4 text-blue-600" />
+          <span className="text-sm font-medium text-blue-700">
+            {credits.toLocaleString()}
+          </span>
         </div>
 
         {/* Notification Bell */}
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNotificationClick}
-            className="relative"
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-              >
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
-            )}
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleNotificationClick}
+          className="relative rounded-xl h-8 px-4"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center bg-blue-500 hover:bg-blue-500 border-transparent"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
 
-        {/* User Menu */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-foreground">
-              {user?.email?.split('@')[0] || 'User'}
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            title="Sign Out"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* User Menu Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 pl-2 rounded-xl h-10 px-6 py-2"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden sm:inline text-sm">
+                {user?.email?.split('@')[0] || 'User'}
+              </span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="flex items-center gap-2 text-red-600"
+              onClick={handleSignOut}
+            >
+              <span>Sign Out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
